@@ -11,7 +11,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- =====================================================
 
 -- Users & Authentication
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id SERIAL PRIMARY KEY,
     username VARCHAR(50) UNIQUE NOT NULL,
     email VARCHAR(100) UNIQUE NOT NULL,
@@ -28,7 +28,7 @@ CREATE TABLE users (
 -- =====================================================
 
 -- Plant Varieties/Species Master
-CREATE TABLE plant_varieties (
+CREATE TABLE IF NOT EXISTS plant_varieties (
     id SERIAL PRIMARY KEY,
     variety_code VARCHAR(50) UNIQUE NOT NULL,
     common_name VARCHAR(100) NOT NULL,
@@ -42,7 +42,7 @@ CREATE TABLE plant_varieties (
 );
 
 -- Mother Plants Registry (Permanent Assets)
-CREATE TABLE mother_plants (
+CREATE TABLE IF NOT EXISTS mother_plants (
     id SERIAL PRIMARY KEY,
     plant_variety_id INTEGER REFERENCES plant_varieties(id),
     plant_code VARCHAR(50) UNIQUE NOT NULL,
@@ -59,7 +59,7 @@ CREATE TABLE mother_plants (
 );
 
 -- Growth Stages Definition
-CREATE TABLE growth_stages (
+CREATE TABLE IF NOT EXISTS growth_stages (
     id SERIAL PRIMARY KEY,
     stage_name VARCHAR(50) UNIQUE NOT NULL, -- Seed, Germination, Vegetative, Ready, Sold
     stage_order INTEGER NOT NULL,
@@ -68,7 +68,7 @@ CREATE TABLE growth_stages (
 );
 
 -- Production Batches (Living Asset Tracking)
-CREATE TABLE batches (
+CREATE TABLE IF NOT EXISTS batches (
     id SERIAL PRIMARY KEY,
     batch_code VARCHAR(50) UNIQUE NOT NULL,
     plant_variety_id INTEGER REFERENCES plant_varieties(id),
@@ -106,7 +106,7 @@ CREATE TABLE batches (
 );
 
 -- Batch History (Track stage transitions and events)
-CREATE TABLE batch_history (
+CREATE TABLE IF NOT EXISTS batch_history (
     id SERIAL PRIMARY KEY,
     batch_id INTEGER REFERENCES batches(id),
     event_type VARCHAR(30) NOT NULL, -- stage_change, mortality, cost_update, relocation
@@ -121,7 +121,7 @@ CREATE TABLE batch_history (
 );
 
 -- Mortality & Waste Tracking
-CREATE TABLE mortality_records (
+CREATE TABLE IF NOT EXISTS mortality_records (
     id SERIAL PRIMARY KEY,
     batch_id INTEGER REFERENCES batches(id),
     quantity_lost INTEGER NOT NULL,
@@ -137,16 +137,33 @@ CREATE TABLE mortality_records (
 -- MODULE 2: DUAL-STREAM INVENTORY SYSTEM
 -- =====================================================
 
+
 -- Inventory Categories
-CREATE TABLE inventory_categories (
+CREATE TABLE IF NOT EXISTS inventory_categories (
     id SERIAL PRIMARY KEY,
     category_name VARCHAR(50) UNIQUE NOT NULL, -- Seeds, Fertilizers, Pesticides, Pots, Soil, Tools
     category_type VARCHAR(20) CHECK (category_type IN ('consumable', 'equipment')),
     description TEXT
 );
 
+-- Suppliers
+CREATE TABLE IF NOT EXISTS suppliers (
+    id SERIAL PRIMARY KEY,
+    supplier_code VARCHAR(50) UNIQUE NOT NULL,
+    supplier_name VARCHAR(150) NOT NULL,
+    contact_person VARCHAR(100),
+    phone VARCHAR(20),
+    email VARCHAR(100),
+    address TEXT,
+    gstin VARCHAR(15), -- GST Number (India)
+    credit_limit DECIMAL(12,2),
+    payment_terms VARCHAR(100),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
 -- Inventory Items (Consumables & Equipment)
-CREATE TABLE inventory_items (
+CREATE TABLE IF NOT EXISTS inventory_items (
     id SERIAL PRIMARY KEY,
     category_id INTEGER REFERENCES inventory_categories(id),
     sku_code VARCHAR(50) UNIQUE NOT NULL,
@@ -189,7 +206,7 @@ CREATE TABLE inventory_items (
 );
 
 -- Inventory Batches (For expiry tracking of chemicals/seeds)
-CREATE TABLE inventory_batches (
+CREATE TABLE IF NOT EXISTS inventory_batches (
     id SERIAL PRIMARY KEY,
     item_id INTEGER REFERENCES inventory_items(id),
     batch_number VARCHAR(50),
@@ -203,7 +220,7 @@ CREATE TABLE inventory_batches (
 );
 
 -- Inventory Transactions (Stock In/Out)
-CREATE TABLE inventory_transactions (
+CREATE TABLE IF NOT EXISTS inventory_transactions (
     id SERIAL PRIMARY KEY,
     item_id INTEGER REFERENCES inventory_items(id),
     inventory_batch_id INTEGER REFERENCES inventory_batches(id), -- NULL if not tracked by batch
@@ -227,7 +244,7 @@ CREATE TABLE inventory_transactions (
 -- =====================================================
 
 -- Nursery Sites
-CREATE TABLE nursery_sites (
+CREATE TABLE IF NOT EXISTS nursery_sites (
     id SERIAL PRIMARY KEY,
     site_name VARCHAR(100) UNIQUE NOT NULL,
     location VARCHAR(200),
@@ -237,7 +254,7 @@ CREATE TABLE nursery_sites (
 );
 
 -- Polyhouses/Greenhouses
-CREATE TABLE polyhouses (
+CREATE TABLE IF NOT EXISTS polyhouses (
     id SERIAL PRIMARY KEY,
     site_id INTEGER REFERENCES nursery_sites(id),
     polyhouse_name VARCHAR(100) NOT NULL,
@@ -249,7 +266,7 @@ CREATE TABLE polyhouses (
 );
 
 -- Sections within Polyhouses
-CREATE TABLE polyhouse_sections (
+CREATE TABLE IF NOT EXISTS polyhouse_sections (
     id SERIAL PRIMARY KEY,
     polyhouse_id INTEGER REFERENCES polyhouses(id),
     section_name VARCHAR(100) NOT NULL,
@@ -273,7 +290,7 @@ ALTER TABLE batches ADD CONSTRAINT fk_batch_section
     FOREIGN KEY (polyhouse_section_id) REFERENCES polyhouse_sections(id);
 
 -- Environmental Logs (Temperature, Humidity, Light)
-CREATE TABLE environmental_logs (
+CREATE TABLE IF NOT EXISTS environmental_logs (
     id SERIAL PRIMARY KEY,
     polyhouse_section_id INTEGER REFERENCES polyhouse_sections(id),
     log_date DATE NOT NULL,
@@ -290,7 +307,7 @@ CREATE TABLE environmental_logs (
 -- =====================================================
 
 -- Chart of Accounts
-CREATE TABLE accounts (
+CREATE TABLE IF NOT EXISTS accounts (
     id SERIAL PRIMARY KEY,
     account_code VARCHAR(50) UNIQUE NOT NULL,
     account_name VARCHAR(150) NOT NULL,
@@ -300,24 +317,9 @@ CREATE TABLE accounts (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
--- Suppliers
-CREATE TABLE suppliers (
-    id SERIAL PRIMARY KEY,
-    supplier_code VARCHAR(50) UNIQUE NOT NULL,
-    supplier_name VARCHAR(150) NOT NULL,
-    contact_person VARCHAR(100),
-    phone VARCHAR(20),
-    email VARCHAR(100),
-    address TEXT,
-    gstin VARCHAR(15), -- GST Number (India)
-    credit_limit DECIMAL(12,2),
-    payment_terms VARCHAR(100),
-    is_active BOOLEAN DEFAULT TRUE,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
 
 -- Customers
-CREATE TABLE customers (
+CREATE TABLE IF NOT EXISTS customers (
     id SERIAL PRIMARY KEY,
     customer_code VARCHAR(50) UNIQUE NOT NULL,
     customer_name VARCHAR(150) NOT NULL,
@@ -333,7 +335,7 @@ CREATE TABLE customers (
 );
 
 -- Purchase Orders
-CREATE TABLE purchase_orders (
+CREATE TABLE IF NOT EXISTS purchase_orders (
     id SERIAL PRIMARY KEY,
     po_number VARCHAR(50) UNIQUE NOT NULL,
     supplier_id INTEGER REFERENCES suppliers(id),
@@ -349,7 +351,7 @@ CREATE TABLE purchase_orders (
 );
 
 -- Purchase Order Items
-CREATE TABLE purchase_order_items (
+CREATE TABLE IF NOT EXISTS purchase_order_items (
     id SERIAL PRIMARY KEY,
     po_id INTEGER REFERENCES purchase_orders(id),
     item_id INTEGER REFERENCES inventory_items(id),
@@ -360,7 +362,7 @@ CREATE TABLE purchase_order_items (
 );
 
 -- Sales Orders
-CREATE TABLE sales_orders (
+CREATE TABLE IF NOT EXISTS sales_orders (
     id SERIAL PRIMARY KEY,
     so_number VARCHAR(50) UNIQUE NOT NULL,
     customer_id INTEGER REFERENCES customers(id),
@@ -381,7 +383,7 @@ CREATE TABLE sales_orders (
 );
 
 -- Sales Order Items
-CREATE TABLE sales_order_items (
+CREATE TABLE IF NOT EXISTS sales_order_items (
     id SERIAL PRIMARY KEY,
     so_id INTEGER REFERENCES sales_orders(id),
     batch_id INTEGER REFERENCES batches(id), -- Links to plant batch
@@ -394,7 +396,7 @@ CREATE TABLE sales_order_items (
 );
 
 -- Invoices
-CREATE TABLE invoices (
+CREATE TABLE IF NOT EXISTS invoices (
     id SERIAL PRIMARY KEY,
     invoice_number VARCHAR(50) UNIQUE NOT NULL,
     invoice_type VARCHAR(20) CHECK (invoice_type IN ('sales', 'purchase')),
