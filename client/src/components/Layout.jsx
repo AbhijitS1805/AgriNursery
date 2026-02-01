@@ -114,7 +114,8 @@ export default function Layout() {
 
   const handleLogout = async () => {
     try {
-      await fetch('http://localhost:5000/api/auth/logout', {
+      const apiBase = import.meta.env.VITE_API_URL || '/api';
+      await fetch(`${apiBase}/auth/logout`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('token')}`
