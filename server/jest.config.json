@@ -1,0 +1,22 @@
+{
+  "testEnvironment": "node",
+  "testMatch": [
+    "**/__tests__/**/*.test.js"
+  ],
+  "coveragePathIgnorePatterns": [
+    "/node_modules/"
+  ],
+  "testTimeout": 10000,
+  "collectCoverageFrom": [
+    "controllers/auth.controller.js",
+    "middleware/auth.middleware.js"
+  ],
+  "coverageThreshold": {
+    "global": {
+      "branches": 50,
+      "functions": 60,
+      "lines": 60,
+      "statements": 60
+    }
+  }
+}
