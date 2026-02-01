@@ -10,7 +10,8 @@
     "setup": "npm install && cd server && npm install && cd ../client && npm install",
     "db:init": "cd server && npm run db:init",
     "build": "cd client && npm run build",
-    "start": "cd server && npm start"
+    "start": "cd server && npm start",
+    "postinstall": "cd client && npm install"
   },
   "keywords": [
     "agriculture",
